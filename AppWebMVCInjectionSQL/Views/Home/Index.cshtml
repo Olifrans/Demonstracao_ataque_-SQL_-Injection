@@ -1,0 +1,174 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1>Demonstração de um ataque - SQL Injection</h1>
+    <h2 style="background-color:red">
+        Lembre-se de que essas práticas é crime, estamos usando apenas para fins educacionais e nunca deve ser usado em sistemas de produção ou online.
+    </h2>
+    <p>
+        Para demonstrar um ataque de SQL Injection em sala de aula,
+        vamos criar uma aplicação simples em ASP.NET Core MVC com as entidades Aluno
+        e Professor. Essa aplicação terá métodos vulneráveis que permitem ataques de
+        SQL Injection, servindo como exemplo didático.
+        <br />
+        <br />
+        Neste exemplo os métodos "Get, Post, Put e Delete" esta vulnerável porque concatena
+        diretamente o parâmetro "nome ou o  id" na consulta SQL.
+        Um usuario mal-intencionado poderia inserir um valor como  ( '; DROP TABLE Alunos;-- ) para deletar a tabela.
+
+    </p>
+
+
+    <h2> Explicação das Vulnerabilidades</h2>
+    <p>
+        Concatenando diretamente valores em consultas SQL: Ao concatenar valores diretamente em consultas, qualquer valor enviado pelo usuário é interpretado diretamente pelo SQL, o que abre a porta para manipulações e ataques.
+        Métodos vulneráveis: Todas as operações (GET, POST, PUT, DELETE) estão sujeitas a ataques se um usuário mal-intencionado manipular os parâmetros (por exemplo, IDs ou outros valores de entrada).
+
+    </p>
+
+
+    <h2>Conclusão</h2>
+    <p>
+        Este exemplo ilustram como falhas de SQL Injection podem ser exploradas em todos os métodos CRUD. 
+        <br />Após demonstrar as vulnerabilidades, recomendo fortemente ensinar a versão segura usando consultas parametrizadas com FromSqlRaw ou LINQ para evitar esses riscos.
+    </p>
+
+
+
+    <h2>Exemplos avançado de SQL Injection</h2>
+    <p>
+        O SQL Injection é uma técnica que permite a um invasor manipular consultas SQL para acessar, modificar ou deletar dados não autorizados em um banco de dados. Vamos ver exemplos de comandos avançados de SQL Injection para cada uma das operações (GET, POST, PUT, DELETE) usando as vulnerabilidades nos métodos fornecidos.
+
+        <br />
+        <br />
+
+        1. GET - Injetar em Consultas de Busca (Ex: Details)
+        Exemplo: /Aluno/Details?id=1
+
+        Se a URL estiver vulnerável e aceitar entrada direta, é possível usar: <br />
+        ?id=1 OR 1=1--
+
+        <br />
+        <br />
+        Explicação:
+
+        1 OR 1=1 sempre será verdadeiro, o que faz a aplicação retornar todos os registros de Alunos em vez de apenas um.
+        Comando mais avançado: <br />
+        ?id=1; DROP TABLE Alunos;--
+
+        <br />
+        <br />
+        Explicação:
+
+        Esse comando injeta uma operação DROP TABLE para excluir a tabela Alunos completamente.
+        2. POST - Injetar ao Criar um Novo Registro
+        Exemplo de ataque: Ao criar um novo aluno, um invasor pode manipular os valores inseridos no formulário.
+
+        Se o campo Nome no formulário for: <br />
+        John'); DROP TABLE Professores;--
+
+        <br />
+        <br />
+        Explicação:
+
+        O valor inserido fecha a primeira parte do comando SQL ('John'), insere o comando malicioso DROP TABLE Professores;, e comenta o restante para ignorar partes da consulta original.
+        Se o método Create usa o valor de Nome diretamente na consulta, isso causará a exclusão da tabela Professores.
+        3. PUT - Injetar ao Atualizar um Registro
+        Exemplo: /Aluno/Edit?id=1
+
+        Se o campo Nome for: <br />
+        NewName'); UPDATE Professores SET Disciplina = 'Hacked' WHERE Id = 1;--
+
+
+        <br />
+        <br />
+        Explicação:
+
+        Ao fechar o valor inicial com '), o invasor pode injetar um comando adicional UPDATE que altera um campo de um professor.
+        Ou ainda: <br />
+        NewName'); DELETE FROM Alunos WHERE Id > 0;--
+
+
+        <br />
+        <br />
+        Explicação:
+
+        Isso exclui todos os registros da tabela Alunos, aproveitando-se da vulnerabilidade para executar um comando DELETE no meio de uma operação de UPDATE.
+        4. DELETE - Injetar ao Deletar um Registro
+        Exemplo: /Aluno/Delete?id=1
+
+        Injetar um valor como: <br />
+        ?id=1 OR 1=1;--
+
+        <br />
+        <br />
+        Explicação:
+
+        Com esse comando, todos os registros de Alunos serão deletados porque a condição 1=1 é sempre verdadeira.
+        Um comando mais sofisticado: <br />
+        ?id=1; DROP TABLE Professores;--
+
+        <br />
+        <br />
+        Explicação:
+
+        Isso faz com que, além de deletar um aluno, o comando também apague a tabela Professores.
+        Notas Importantes:
+        Comandos de Dump: Além de comandos de manipulação de dados, um invasor também pode usar comandos para extrair informações: <br />
+o
+        ?id=1 UNION SELECT table_name, column_name FROM information_schema.columns;--
+
+        <br />
+        <br />
+        Explicação:
+
+        Com UNION, é possível combinar resultados de outras tabelas ou metadados do banco de dados, como nomes de tabelas e colunas.
+        Injeção em Variáveis de Data: Algumas vezes, valores de data são usados diretamente. O invasor pode tentar injetar:    <br />
+              
+        '2024-10-20' OR '1'='1';--
+
+
+        <br />
+        <br />
+
+        Explicação:
+
+        Isso pode ser usado para acessar todos os registros que não deveriam estar visíveis ou alterar registros indevidamente.
+        Conclusão e Prevenção
+
+        <br />
+        <br />
+        Esses exemplos mostram como é possível explorar vulnerabilidades em todas as operações CRUD (Create, Read, Update, Delete). No entanto, é importante reforçar sempre as práticas seguras:
+
+        <br />
+        <br />
+        Nunca concatenar entradas diretamente em consultas SQL.
+        Utilizar consultas parametrizadas e ORMs (Object-Relational Mappers) como Entity Framework, que automaticamente escapam e parametrizam as consultas.
+        Validar e sanitizar entradas do usuário.
+        Restringir privilégios de usuários no banco de dados, garantindo que operações críticas (como DROP TABLE) não possam ser executadas por usuários comuns.
+        Esses ataques são extremamente perigosos e devem ser usados apenas em um ambiente controlado e educativo. Se precisar de mais exemplos ou explicações, estou à disposição!
+    
+    
+    </p>
+
+
+
+
+
+
+
+
+
+
+
+    <h2 style="background-color:red">
+        Atenção mais uma vez, este exemplo de aplicação serve como exemplo didático para
+        demonstrar SQL Injection e ensinar a importância de usar consultas parametrizadas.
+    </h2>
+
+
+
+
+</div>
